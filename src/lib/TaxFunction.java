@@ -1,8 +1,12 @@
 package lib;
 
 public class TaxFunction {
+	private static final int taxRatePercent = 5;
+	private static final int baseTaxFreeIncome = 54000000;
+	private static final int spouseTaxFreeIncome = 4500000;
+	private static final int childTaxFreeIncome = 4500000; // Disesuaikan berdasarkan komentar
+	private static final int maxChildrenForTaxDeduction = 3;
 
-	
 	/**
 	 * Fungsi untuk menghitung jumlah pajak penghasilan pegawai yang harus dibayarkan setahun.
 	 * 
@@ -11,34 +15,42 @@ public class TaxFunction {
 	 * Jika pegawai belum menikah dan belum punya anak maka penghasilan tidak kena pajaknya adalah Rp 54.000.000.
 	 * Jika pegawai sudah menikah maka penghasilan tidak kena pajaknya ditambah sebesar Rp 4.500.000.
 	 * Jika pegawai sudah memiliki anak maka penghasilan tidak kena pajaknya ditambah sebesar Rp 4.500.000 per anak sampai anak ketiga.
-	 * 
 	 */
-	
-	
 	public static int calculateTax(int monthlySalary, int otherMonthlyIncome, int numberOfMonthWorking, int deductible, boolean isMarried, int numberOfChildren) {
 		
-		int tax = 0;
+		validateInput(numberOfMonthWorking, numberOfChildren);
 		
+		// Hitung penghasilan tahunan kotor
+		int annualIncome = (monthlySalary + otherMonthlyIncome) * numberOfMonthWorking;
+		
+		// Hitung penghasilan tidak kena pajak
+		int taxFreeIncome = calculateTaxFreeIncome(isMarried, numberOfChildren);
+		
+		// Hitung penghasilan kena pajak
+		int taxableIncome = annualIncome - deductible - taxFreeIncome;
+		
+		// Hitung pajak (5% dari penghasilan kena pajak) atau 0 jika penghasilan kena pajak negatif
+		int tax = Math.max(0, (int) Math.round(taxRatePercent / 100.0 * taxableIncome));
+		
+		return tax;
+	}
+	
+	private static void validateInput(int numberOfMonthWorking, int numberOfChildren) {
 		if (numberOfMonthWorking > 12) {
 			System.err.println("More than 12 month working per year");
 		}
-		
-		if (numberOfChildren > 3) {
-			numberOfChildren = 3;
-		}
-		
-		if (isMarried) {
-			tax = (int) Math.round(0.05 * (((monthlySalary + otherMonthlyIncome) * numberOfMonthWorking) - deductible - (54000000 + 4500000 + (numberOfChildren * 1500000))));
-		}else {
-			tax = (int) Math.round(0.05 * (((monthlySalary + otherMonthlyIncome) * numberOfMonthWorking) - deductible - 54000000));
-		}
-		
-		if (tax < 0) {
-			return 0;
-		}else {
-			return tax;
-		}
-			 
 	}
 	
+	private static int calculateTaxFreeIncome(boolean isMarried, int numberOfChildren) {
+		int taxFreeIncome = baseTaxFreeIncome;
+		
+		if (isMarried) {
+			taxFreeIncome += spouseTaxFreeIncome;
+		}
+		
+		int childrenForDeduction = Math.min(numberOfChildren, maxChildrenForTaxDeduction);
+		taxFreeIncome += childrenForDeduction * childTaxFreeIncome;
+		
+		return taxFreeIncome;
+	}
 }
